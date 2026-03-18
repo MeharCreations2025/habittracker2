@@ -4,193 +4,110 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Discipline - Habit Tracker</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
-    <script src="https://unpkg.com/lucide@0.263.1"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+    <script crossorigin src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { background-color: #111827; color: #ffffff; margin: 0; font-family: sans-serif; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: #374151; }
-        ::-webkit-scrollbar-thumb { background: #6B7280; border-radius: 3px; }
+        .loading-screen { display: flex; justify-content: center; align-items: center; height: 100vh; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+    <div id="root">
+        <div class="loading-screen text-gray-400">Loading App... (Check Internet Connection for CDN)</div>
+    </div>
 
     <script type="text/babel">
+        // Destructure from Global objects provided by UMD builds
         const { useState, useEffect, useMemo } = React;
         const { motion, AnimatePresence } = FramerMotion;
-        const { CheckCircle, Circle, Clock, ArrowRight, Moon, Settings, Zap, ArrowLeft } = lucide;
-
-        // --- UTILS --- [cite: 184, 189]
-        const getCurrentPrayerPeriod = (prayerTimes) => {
-            if (!prayerTimes) return 'fajr';
-            const now = new Date();
-            const prayers = [
-                { name: 'fajr', time: new Date(prayerTimes.fajr) },
-                { name: 'dhuhr', time: new Date(prayerTimes.dhuhr) },
-                { name: 'asr', time: new Date(prayerTimes.asr) },
-                { name: 'maghrib', time: new Date(prayerTimes.maghrib) },
-                { name: 'isha', time: new Date(prayerTimes.isha) }
-            ];
-            for (let i = 0; i < prayers.length; i++) {
-                const current = prayers[i];
-                const next = prayers[i + 1];
-                if (!next || (now >= current.time && now < next.time)) return current.name;
-            }
-            return 'fajr';
-        };
-
-        const getNextHabit = (habits, progress, currentPeriod) => {
-            const isSunday = new Date().getDay() === 0;
-            const currentPeriodHabits = habits
-                .filter(h => h.prayerPeriod === currentPeriod && h.enabled && (isSunday ? h.sundayEnabled : true))
-                .sort((a, b) => a.order - b.order);
-            return currentPeriodHabits.find(h => !progress.habits[h.id] || progress.habits[h.id] === 'skipped') || null;
-        };
-
-        // --- HOOKS --- [cite: 138, 149]
-        const useHabits = () => {
-            const [habits, setHabits] = useState([]);
-            const [progress, setProgress] = useState({
-                date: new Date().toISOString().split('T')[0],
-                habits: {},
-                dailyScore: 0
-            });
-
-            useEffect(() => {
-                const savedHabits = localStorage.getItem('habits');
-                if (savedHabits) setHabits(JSON.parse(savedHabits));
-                else {
-                    const defaults = [
-                        { id: '1', name: 'Wazifa', prayerPeriod: 'fajr', enabled: true, sundayEnabled: true, order: 1 },
-                        { id: '2', name: 'Quran Reading', prayerPeriod: 'fajr', enabled: true, sundayEnabled: true, order: 2 },
-                        { id: '4', name: 'Work', prayerPeriod: 'dhuhr', enabled: true, sundayEnabled: false, order: 1 },
-                        { id: '9', name: 'Outdoor Activity', prayerPeriod: 'asr', enabled: true, sundayEnabled: true, order: 1 },
-                        { id: '10', name: 'Quran Reading', prayerPeriod: 'maghrib', enabled: true, sundayEnabled: true, order: 1 },
-                        { id: '13', name: 'Family Time', prayerPeriod: 'isha', enabled: true, sundayEnabled: true, order: 1 }
-                    ];
-                    setHabits(defaults);
-                    localStorage.setItem('habits', JSON.stringify(defaults));
-                }
-            }, []);
-
-            const updateHabit = (habitId, status) => {
-                const newProgress = { ...progress, habits: { ...progress.habits, [habitId]: status } };
-                setProgress(newProgress);
-            };
-
-            const getDailyScore = () => {
-                const total = habits.filter(h => h.enabled).length;
-                const done = Object.values(progress.habits).filter(s => s === 'completed').length;
-                return total > 0 ? Math.round((done / total) * 100) : 0;
-            };
-
-            return { habits, progress, updateHabit, getDailyScore };
-        };
-
-        const usePrayerTimes = () => {
-            const [prayerTimes, setPrayerTimes] = useState(null);
-            useEffect(() => {
-                const mockTimes = {
-                    fajr: new Date().setHours(5, 0, 0),
-                    dhuhr: new Date().setHours(12, 30, 0),
-                    asr: new Date().setHours(16, 0, 0),
-                    maghrib: new Date().setHours(18, 15, 0),
-                    isha: new Date().setHours(19, 45, 0)
-                };
-                setPrayerTimes(mockTimes);
-            }, []);
-            return { prayerTimes };
-        };
-
-        // --- COMPONENTS --- [cite: 90, 41, 116, 217, 222]
+        
+        // --- COMPONENTS ---
         const ProgressBar = ({ score }) => (
-            <div className="mb-8">
+            <div className="mb-8 p-4 bg-gray-800/50 rounded-xl">
                 <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-lg font-medium">Today's Progress</h3>
-                    <span className="text-2xl font-bold">{score}%</span>
+                    <h3 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Progress</h3>
+                    <span className="text-2xl font-bold text-blue-400">{score}%</span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-3">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${score}%` }} 
-                        className={`h-3 rounded-full ${score >= 80 ? 'bg-green-500' : 'bg-blue-500'}`} />
+                    <motion.div 
+                        initial={{ width: 0 }} 
+                        animate={{ width: `${score}%` }} 
+                        className="h-3 rounded-full bg-gradient-to-r from-blue-600 to-blue-400" 
+                    />
                 </div>
             </div>
         );
 
-        const PrayerSection = ({ prayerTimes, currentPeriod }) => (
-            <div className="grid grid-cols-5 gap-4 mb-8">
-                {['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].map(p => (
-                    <div key={p} className={`p-4 rounded-lg text-center border ${p === currentPeriod ? 'bg-blue-900/40 border-blue-400' : 'bg-gray-800 border-gray-700'}`}>
-                        <h3 className="capitalize font-medium">{p}</h3>
-                        <p className="text-xs text-gray-400">Scheduled</p>
-                    </div>
-                ))}
-            </div>
+        const HabitCard = ({ name, status, onClick }) => (
+            <button 
+                onClick={onClick}
+                className={`w-full flex items-center p-4 mb-3 rounded-xl border transition-all ${
+                    status === 'completed' 
+                    ? 'bg-green-900/20 border-green-500/50 text-green-100' 
+                    : 'bg-gray-800 border-gray-700 hover:border-gray-500 text-white'
+                }`}
+            >
+                <div className={`mr-4 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                    status === 'completed' ? 'bg-green-500 border-green-500' : 'border-gray-500'
+                }`}>
+                    {status === 'completed' && <span>✓</span>}
+                </div>
+                <span className="font-medium">{name}</span>
+            </button>
         );
 
-        const HabitFlow = ({ habits, progress, currentPeriod, onHabitUpdate }) => {
-            const periods = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+        const App = () => {
+            const [habits, setHabits] = useState([
+                { id: 1, name: 'Wazifa (Fajr)', period: 'fajr', status: 'pending' },
+                { id: 2, name: 'Quran Reading', period: 'fajr', status: 'pending' },
+                { id: 3, name: 'Work/Study', period: 'dhuhr', status: 'pending' },
+                { id: 4, name: 'Exercise', period: 'asr', status: 'pending' },
+                { id: 5, name: 'Family Time', period: 'isha', status: 'pending' }
+            ]);
+
+            const toggleHabit = (id) => {
+                setHabits(prev => prev.map(h => 
+                    h.id === id ? { ...h, status: h.status === 'completed' ? 'pending' : 'completed' } : h
+                ));
+            };
+
+            const score = Math.round((habits.filter(h => h.status === 'completed').length / habits.length) * 100);
+
             return (
-                <div className="space-y-6">
-                    {periods.map(period => {
-                        const periodHabits = habits.filter(h => h.prayerPeriod === period);
-                        if (periodHabits.length === 0) return null;
-                        return (
-                            <div key={period} className={`p-6 rounded-xl border ${period === currentPeriod ? 'border-blue-500 bg-blue-900/10' : 'border-gray-700'}`}>
-                                <h3 className="capitalize text-lg font-bold mb-4">{period} Period</h3>
-                                <div className="space-y-3">
+                <div className="max-w-md mx-auto px-4 py-10">
+                    <header className="mb-10 text-center">
+                        <h1 className="text-4xl font-extrabold text-white mb-2">Daily Discipline</h1>
+                        <p className="text-gray-400">Faisalabad Tracker</p>
+                    </header>
+
+                    <ProgressBar score={score} />
+
+                    <div className="space-y-6">
+                        {['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'].map(period => {
+                            const periodHabits = habits.filter(h => h.period === period);
+                            if (periodHabits.length === 0) return null;
+                            return (
+                                <div key={period}>
+                                    <h2 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-widest px-1">{period}</h2>
                                     {periodHabits.map(h => (
-                                        <button key={h.id} onClick={() => onHabitUpdate(h.id, 'completed')}
-                                            className="w-full flex items-center p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition">
-                                            {progress.habits[h.id] === 'completed' ? <CheckCircle className="text-green-400 mr-3" /> : <Circle className="text-gray-500 mr-3" />}
-                                            {h.name}
-                                        </button>
+                                        <HabitCard 
+                                            key={h.id} 
+                                            name={h.name} 
+                                            status={h.status} 
+                                            onClick={() => toggleHabit(h.id)} 
+                                        />
                                     ))}
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
             );
         };
-
-        const Dashboard = ({ onToggleLite }) => {
-            const { habits, progress, updateHabit, getDailyScore } = useHabits();
-            const { prayerTimes } = usePrayerTimes();
-            const currentPeriod = useMemo(() => getCurrentPrayerPeriod(prayerTimes), [prayerTimes]);
-            
-            return (
-                <div className="container mx-auto px-4 py-8 max-w-4xl">
-                    <header className="flex justify-between items-center mb-8">
-                        <h1 className="text-3xl font-bold">Daily Discipline</h1>
-                        <button onClick={onToggleLite} className="p-2 bg-purple-900/30 border border-purple-500 rounded-lg">
-                            <Moon className="w-5 h-5 text-purple-400" />
-                        </button>
-                    </header>
-                    <ProgressBar score={getDailyScore()} />
-                    <PrayerSection prayerTimes={prayerTimes} currentPeriod={currentPeriod} />
-                    <HabitFlow habits={habits} progress={progress} currentPeriod={currentPeriod} onHabitUpdate={updateHabit} />
-                </div>
-            );
-        };
-
-        function App() {
-            const [isLite, setIsLite] = useState(false);
-            return (
-                <div className="min-h-screen">
-                    {isLite ? (
-                        <div className="p-8 text-center">
-                            <h2 className="text-2xl mb-4">Lite Mode Active</h2>
-                            <button onClick={() => setIsLite(false)} className="text-blue-400">Back to Full Mode</button>
-                        </div>
-                    ) : <Dashboard onToggleLite={() => setIsLite(true)} />}
-                </div>
-            );
-        }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
